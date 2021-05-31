@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from paperwhisperer.retrieval.arxivretriever import ArxivRetriever
+from paperwhisperer.retrieval.pubmedretriever import PubmedRetriever
 from paperwhisperer.tts.ttsprocessor import TTSProcessor
 from paperwhisperer.tts.googlespeechynthesiser import GoogleSpeechSynthesiser
 
@@ -29,10 +30,15 @@ def create_summaries():
 
 def _process_summaries(query, max_articles, save_dir, num_days):
     Path(save_dir).mkdir(parents=True, exist_ok=True)
-    arxiv_retriever, tts_processor = _create_objects(query,
-                                                     max_articles,
-                                                     save_dir)
+    arxiv_retriever, pubmed_retriever, tts_processor = _create_objects(query,
+                                                                       max_articles,
+                                                                       save_dir)
     search_results = arxiv_retriever.get_articles()
+    search_results_pubmed = pubmed_retriever.get_articles()
+
+    for pubmed_result in search_results_pubmed:
+        search_results.append(pubmed_result)
+
     articles = search_results.get_articles_not_older_than_days(num_days)
     if articles:
         tts_processor.synthesise_and_save(articles)
@@ -62,6 +68,7 @@ def _parse_console_arguments():
 
 def _create_objects(query, max_results, save_dir):
     arxiv_retriever = ArxivRetriever(query, max_results)
+    pubmed_retriever = PubmedRetriever(query, max_results)
     speech_synthesiser = GoogleSpeechSynthesiser()
     tts_processor = TTSProcessor(speech_synthesiser, save_dir)
-    return arxiv_retriever, tts_processor
+    return arxiv_retriever, pubmed_retriever, tts_processor

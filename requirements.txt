@@ -1,3 +1,4 @@
 arxiv==1.2.0
 google-cloud-texttospeech
+pymed==0.8.9
 python-dotenv
